@@ -17,7 +17,7 @@
     "@puppeteer/browsers": "^2.1.0",  
     "axios": "^1.13.2",
     "cheerio": "^1.1.2",
-    "cors": "^2.8.5",
+    "cors": "^2.8.5", 
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
     "mysql2": "^3.15.3",

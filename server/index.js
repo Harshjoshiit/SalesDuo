@@ -1,5 +1,3 @@
-// ============================================================================
-// SalesDuo Backend (index.js) - FINAL VERSION
 // Includes: Scraping, Gemini AI, Sequelize/MySQL DB, and Safe History Routes
 // ============================================================================
 

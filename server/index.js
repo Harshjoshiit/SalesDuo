@@ -1,7 +1,9 @@
 // ============================================================================
-// SalesDuo Backend (Render-Safe Version)
-// Scraping: Axios + Cheerio (NO Puppeteer)
-// Gemini AI + Sequelize/MySQL (DB guarded)
+// SalesDuo Backend – FINAL STABLE VERSION
+// ✅ Axios + Cheerio scraping (Render safe)
+// ✅ Gemini AI
+// ✅ Sequelize/MySQL (DB guarded)
+// ✅ Correct CORS for local + Vercel
 // ============================================================================
 
 const express = require("express");
@@ -14,12 +16,27 @@ const { Sequelize, DataTypes } = require("sequelize");
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173" }));
+/* ======================= CORS (FIXED) ======================= */
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "https://salesduoiitp.vercel.app"
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS not allowed"));
+    },
+  })
+);
+
 app.use(express.json());
 
-// ============================================================================
-// DB Setup
-// ============================================================================
+/* ======================= DB SETUP ======================= */
 let isDbConnected = false;
 
 const sequelize = new Sequelize(
@@ -38,10 +55,10 @@ const OptimizationHistory = sequelize.define(
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     asin: { type: DataTypes.STRING(20), allowNull: false },
-    original_title: { type: DataTypes.STRING(255), allowNull: false },
+    original_title: { type: DataTypes.STRING(255) },
     original_bullets: { type: DataTypes.JSON },
     original_description: { type: DataTypes.TEXT },
-    optimized_title: { type: DataTypes.STRING(255), allowNull: false },
+    optimized_title: { type: DataTypes.STRING(255) },
     optimized_bullets: { type: DataTypes.JSON },
     optimized_description: { type: DataTypes.TEXT },
     optimized_keywords: { type: DataTypes.JSON },
@@ -50,7 +67,7 @@ const OptimizationHistory = sequelize.define(
   { tableName: "optimization_history" }
 );
 
-async function connectDB() {
+(async function connectDB() {
   try {
     await sequelize.authenticate();
     await OptimizationHistory.sync();
@@ -58,20 +75,16 @@ async function connectDB() {
     console.log("✅ DB connected");
   } catch (err) {
     isDbConnected = false;
-    console.error("❌ DB disabled:", err.message);
+    console.warn("⚠️ DB disabled:", err.message);
   }
-}
+})();
 
-connectDB();
-
-// ============================================================================
-// Gemini
-// ============================================================================
+/* ======================= GEMINI ======================= */
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 function extractJSON(text) {
   try {
-    const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const match = cleaned.match(/\{[\s\S]*\}/);
     return match ? JSON.parse(match[0]) : null;
   } catch {
@@ -79,9 +92,7 @@ function extractJSON(text) {
   }
 }
 
-// ============================================================================
-// ROUTE 1: Fetch Amazon Product (Axios + Cheerio)
-// ============================================================================
+/* ======================= FETCH (Axios + Cheerio) ======================= */
 app.get("/api/fetch/:asin", async (req, res) => {
   const { asin } = req.params;
 
@@ -102,7 +113,7 @@ app.get("/api/fetch/:asin", async (req, res) => {
     const title = $("#productTitle").text().trim();
 
     const bullets = $("#feature-bullets li span")
-      .map((i, el) => $(el).text().trim())
+      .map((_, el) => $(el).text().trim())
       .get()
       .filter((b) => b.length > 20)
       .slice(0, 8);
@@ -114,7 +125,7 @@ app.get("/api/fetch/:asin", async (req, res) => {
 
     if (!title) {
       return res.status(404).json({
-        error: "Invalid ASIN or Amazon blocked the request",
+        error: "Invalid ASIN or Amazon blocked request",
       });
     }
 
@@ -123,21 +134,19 @@ app.get("/api/fetch/:asin", async (req, res) => {
       data: { title, bullets, description },
     });
   } catch (err) {
-    console.error("❌ Axios scrape failed:", err.message);
+    console.error("❌ Scraping failed:", err.message);
     res.status(500).json({
-      error: "Scraping failed using Axios/Cheerio",
+      error: "Scraping failed",
       details: err.message,
     });
   }
 });
 
-// ============================================================================
-// ROUTE 2: AI Optimization (UNCHANGED)
-// ============================================================================
+/* ======================= OPTIMIZE ======================= */
 app.post("/api/optimize", async (req, res) => {
   const { asin, data } = req.body;
 
-  if (!data || !data.title) {
+  if (!data?.title) {
     return res.status(400).json({ error: "Missing product data" });
   }
 
@@ -148,19 +157,18 @@ app.post("/api/optimize", async (req, res) => {
 
   const prompt = `
 You are an Amazon SEO expert.
+Rewrite the listing and return ONLY valid JSON.
 
-Rewrite the listing following Amazon guidelines.
-
-ORIGINAL TITLE:
+TITLE:
 ${data.title}
 
 BULLETS:
-${data.bullets.join("\n")}
+${(data.bullets || []).join("\n")}
 
 DESCRIPTION:
 ${data.description}
 
-RETURN ONLY VALID JSON:
+FORMAT:
 {
   "title": "",
   "bullets": [],
@@ -182,18 +190,19 @@ RETURN ONLY VALID JSON:
     });
   } catch (err) {
     console.error("❌ Gemini failed:", err.message);
+
     res.json({
       success: true,
       optimized: {
-        title: `${data.title} – FALLBACK`,
+        title: `${data.title} – Improved Listing`,
         bullets: [
-          "High quality design",
-          "Durable materials",
-          "Optimized for daily use",
-          "Well engineered structure",
-          "Reliable performance",
+          "High-quality design for everyday use",
+          "Durable construction for reliable performance",
+          "Optimized for comfort and usability",
+          "Carefully crafted with attention to detail",
+          "Suitable for a wide range of applications",
         ],
-        description: "Fallback AI content",
+        description: "Fallback AI content generated due to processing error.",
         keywords: data.title.split(" ").slice(0, 5),
       },
       ai_used: "fallback",
@@ -201,28 +210,21 @@ RETURN ONLY VALID JSON:
   }
 });
 
-// ============================================================================
-// ROUTE 3: Save (DB Guarded)
-// ============================================================================
+/* ======================= SAVE (DB GUARDED) ======================= */
 app.post("/api/save", async (req, res) => {
   if (!isDbConnected) {
-    return res.status(503).json({
-      error: "Database unavailable",
-    });
+    return res.status(503).json({ error: "Database unavailable" });
   }
 
   try {
     const record = await OptimizationHistory.create(req.body);
     res.status(201).json({ success: true, record });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Save failed" });
   }
 });
 
-// ============================================================================
-// ROUTE 4: History (DB Guarded)
-// ============================================================================
+/* ======================= HISTORY (DB GUARDED) ======================= */
 app.get("/api/history", async (req, res) => {
   if (!isDbConnected) return res.json([]);
 
@@ -234,9 +236,7 @@ app.get("/api/history", async (req, res) => {
   res.json(history);
 });
 
-// ============================================================================
-// Server
-// ============================================================================
+/* ======================= SERVER ======================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);

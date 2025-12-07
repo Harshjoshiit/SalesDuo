@@ -12,7 +12,12 @@ const { Sequelize, DataTypes } = require("sequelize");
 
 const app = express();
 // Ensure CORS is set correctly for your frontend URL
-app.use(cors({ origin: "http://localhost:5173" })); 
+const ALLOWED_ORIGINS = [
+    "http://localhost:5173", 
+    process.env.FRONTEND_URL
+].filter(Boolean); // Filter(Boolean) removes 'undefined' if the variable is not set
+
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
 
 // ============================================================================

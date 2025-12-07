@@ -8,9 +8,8 @@ This project demonstrates **real-world AI integration, strong prompt-engineering
 
 ## 🌐 Live Demo
 
-🔗 **Frontend (Vercel):** [https://salesduoiitp.vercel.app/](https://salesduoiitp.vercel.app/)
-
-MySQL-backed history is enabled **locally** and can be switched to a managed cloud database via environment variables.
+- 🔗 **Frontend (Vercel):** https://salesduoiitp.vercel.app/ | **Backend (Render):** https://salesduo-1nau.onrender.com/
+- ✅ **Current deployment supports Amazon product fetching and AI optimization**; MySQL-backed history is enabled **locally** and can be switched to a managed cloud database via environment variables.
 
 ---
 

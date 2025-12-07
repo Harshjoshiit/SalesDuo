@@ -4,7 +4,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "PUPPETEER_SKIP_DOWNLOAD=true node index.js",
     "dev": "nodemon index.js",
     "install-deps": "npm install && cd client && npm install",
     "postinstall": "npm install @puppeteer/browsers"  
@@ -14,7 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@puppeteer/browsers": "^2.1.0", 
+    "@puppeteer/browsers": "^2.1.0",  
     "axios": "^1.13.2",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",

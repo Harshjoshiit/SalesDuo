@@ -4,7 +4,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "start":  node index.js",
+    "start":  "node index.js",
     "dev": "nodemon index.js",
     "install-deps": "npm install && cd client && npm install",
     "postinstall": "npm install @puppeteer/browsers"  

@@ -10,7 +10,7 @@ This project demonstrates **real-world AI integration, strong prompt-engineering
 
 🔗 **Frontend (Vercel):** [https://salesduoiitp.vercel.app/](https://salesduoiitp.vercel.app/)
 
-> The deployed demo showcases **real Amazon scraping + AI optimization**. MySQL-backed history is enabled **locally** and can be switched to a managed cloud database via environment variables.
+MySQL-backed history is enabled **locally** and can be switched to a managed cloud database via environment variables.
 
 ---
 
